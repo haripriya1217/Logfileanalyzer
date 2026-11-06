@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Expense Tracker</title>
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
+}
+body{
+  background:#f4f6f9;
+  color:#222;
+}
+.dark{
+  background:#111;
+  color:white;
+}
+.container{
+  width:90%;
+  max-width:900px;
+  margin:20px auto;
+}
+.card{
+  background:white;
+  padding:20px;
+  margin:15px 0;
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+.dark .card{
+  background:#1d1d1d;
+}
+h1,h2{
+  margin-bottom:15px;
+}
+input,select,button{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{
+  background:#007bff;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+button:hover{
+  background:#0056b3;
+}
+.flex{
+  display:flex;
+  gap:10px;
+}
+.flex .card{
+  flex:1;
+  text-align:center;
+}
+.progress{
+  width:100%;
+  background:#ddd;
+  border-radius:20px;
+  overflow:hidden;
+  height:25px;
+}
+.bar{
+  height:100%;
+  background:green;
+  width:0%;
+  text-align:center;
+  color:white;
+  line-height:25px;
+}
+.expense-item{
+  padding:10px;
+  border-bottom:1px solid #ddd;
+}
+.alert{
+  color:red;
+  font-weight:bold;
+}
+.success{
+  color:green;
+  font-weight:bold;
+}
+.toggle{
+  float:right;
+  width:auto;
+  padding:8px 15px;
+}
+.hidden{
+  display:none;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>
+  Smart Expense Tracker
+  <button class="toggle" onclick="toggleDark()">🌙 Dark Mode</button>
+</h1>
+
+<!-- LOGIN -->
+<div class="card" id="authCard">
+  <h2>Login / Register</h2>
+  <input type="text" id="username" placeholder="Enter Name">
+  <button onclick="login()">Enter</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<div class="flex">
+  <div class="card">
+    <h3>Total Income</h3>
+    <p id="incomeDisplay">₹0</p>
+  </div>
+  <div class="card">
+    <h3>Total Expense</h3>
+    <p id="expenseDisplay">₹0</p>
+  </div>
+  <div class="card">
+    <h3>Balance</h3>
+    <p id="balanceDisplay">₹0</p>
+  </div>
+</div>
+
+<!-- INCOME -->
+<div class="card">
+  <h2>Add Income</h2>
+  <input type="number" id="incomeInput" placeholder="Enter income">
+  <button onclick="addIncome()">Add Income</button>
+</div>
+
+<!-- BUDGET -->
+<div class="card">
+  <h2>Set Monthly Budget</h2>
+  <input type="number" id="budgetInput" placeholder="Enter budget">
+  <button onclick="setBudget()">Set Budget</button>
+  <p id="budgetStatus"></p>
+</div>
+
+<!-- EXPENSE -->
+<div class="card">
+  <h2>Add Expense</h2>
+  <input type="number" id="expenseAmount" placeholder="Amount">
+  <select id="category">
+    <option>Food</option>
+    <option>Shopping</option>
+    <option>Transport</option>
+    <option>Bills</option>
+    <option>Others</option>
+  </select>
+  <input type="text" id="note" placeholder="Notes">
+  <button onclick="addExpense()">Add Expense</button>
+</div>
+
+<!-- SAVINGS -->
+<div class="card">
+  <h2>Savings Goal</h2>
+  <input type="text" id="goalName" placeholder="Goal name">
+  <input type="number" id="goalAmount" placeholder="Target amount">
+  <button onclick="setGoal()">Create Goal</button>
+
+  <input type="number" id="saveMoney" placeholder="Add savings amount">
+  <button onclick="addSavings()">Save Money</button>
+
+  <p id="goalText"></p>
+  <div class="progress">
+    <div class="bar" id="goalBar">0%</div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="card">
+  <h2>Expense History</h2>
+  <div id="history"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+let income = 0;
+let expense = 0;
+let budget = 0;
+let saved = 0;
+let goalTarget = 0;
+let goalTitle = "";
+
+function login(){
+  let user = document.getElementById("username").value;
+  if(user===""){
+    alert("Enter name");
+    return;
+  }
+  localStorage.setItem("user", user);
+  document.getElementById("authCard").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+}
+
+function addIncome(){
+  let val = Number(document.getElementById("incomeInput").value);
+  income += val;
+  updateUI();
+}
+
+function setBudget(){
+  budget = Number(document.getElementById("budgetInput").value);
+  updateBudget();
+}
+
+function addExpense(){
+  let amt = Number(document.getElementById("expenseAmount").value);
+  let cat = document.getElementById("category").value;
+  let note = document.getElementById("note").value;
+
+  expense += amt;
+
+  let div = document.createElement("div");
+  div.className="expense-item";
+  div.innerHTML = `<b>${cat}</b> - ₹${amt}<br>${note}`;
+  document.getElementById("history").prepend(div);
+
+  updateUI();
+  updateBudget();
+}
+
+function setGoal(){
+  goalTitle = document.getElementById("goalName").value;
+  goalTarget = Number(document.getElementById("goalAmount").value);
+  updateGoal();
+}
+
+function addSavings(){
+  let amt = Number(document.getElementById("saveMoney").value);
+  saved += amt;
+  updateGoal();
+}
+
+function updateGoal(){
+  if(goalTarget===0) return;
+
+  let percent = Math.min((saved/goalTarget)*100,100);
+  document.getElementById("goalText").innerHTML =
+    `${goalTitle}: ₹${saved} / ₹${goalTarget}`;
+
+  document.getElementById("goalBar").style.width = percent+"%";
+  document.getElementById("goalBar").innerText =
+    Math.round(percent)+"%";
+}
+
+function updateBudget(){
+  let status = document.getElementById("budgetStatus");
+
+  if(budget===0){
+    status.innerHTML="";
+    return;
+  }
+
+  if(expense >= budget){
+    status.innerHTML =
+      `<span class='alert'>Over Budget!</span>`;
+  }
+  else if(expense >= budget*0.8){
+    status.innerHTML =
+      `<span class='alert'>Warning: Near Budget Limit</span>`;
+  }
+  else{
+    status.innerHTML =
+      `<span class='success'>Budget Healthy</span>`;
+  }
+}
+
+function updateUI(){
+  document.getElementById("incomeDisplay").innerText = "₹"+income;
+  document.getElementById("expenseDisplay").innerText = "₹"+expense;
+  document.getElementById("balanceDisplay").innerText =
+    "₹"+(income-expense);
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
